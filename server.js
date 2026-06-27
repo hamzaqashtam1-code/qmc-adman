@@ -4,32 +4,26 @@ const cors = require('cors');
 app.use(cors());
 app.use(express.json());
 
-// البيانات المركزية التي سيقرأها موقع الزبائن وموقع الإدارة
-let data = {
-    systemConfig: { 
-        restaurantName: "مطاعم أبو يونس", 
-        bgImage: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5", 
-        themeColor: "#1e4620", 
-        availableTables: 12 
-    },
-    categories: [{name: "شاورما"}, {name: "بروستد"}, {name: "مشروبات"}],
-    mealsData: [
-        { id: 1, name: "شاورما دجاج", price: 3.50, category: "شاورما", img: "https://images.unsplash.com/photo-1649144368140-5e3692beeb51?w=200", available: true },
-        { id: 2, name: "بروستد", price: 6.00, category: "بروستد", img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=200", available: true }
+// بيانات المطعم
+let menu = {
+    name: "مطعم أبو يونس",
+    items: [
+        { id: 1, name: "شاورما دجاج", price: 3.5, available: true },
+        { id: 2, name: "بروستد", price: 6.0, available: true }
     ],
-    ordersList: []
+    orders: []
 };
 
-// هذا الرابط الذي سيطلبه موقع الزبائن ليأخذ البيانات (المنيو والإعدادات)
-app.get('/api/public/menu', (req, res) => res.json(data));
+// 1. رابط الزبائن (للمنيو)
+app.get('/api/menu', (req, res) => res.json(menu));
 
-// هنا يستقبل السيرفر الطلبات من موقع الزبائن ويحفظها في القائمة
-app.post('/api/public/submit-order', (req, res) => {
-    data.ordersList.unshift(req.body);
-    res.json({ success: true });
+// 2. رابط الطلبات (الزبون يطلب منه)
+app.post('/api/order', (req, res) => {
+    menu.orders.push(req.body);
+    res.json({ message: "تم استلام طلبك بنجاح!" });
 });
 
-// هذا الرابط لمشاهدة الطلبات (مستقبلاً)
-app.get('/api/orders', (req, res) => res.json(data.ordersList));
+// 3. لوحة تحكم بسيطة (صاحب المطعم بشوف الطلبات)
+app.get('/api/admin/orders', (req, res) => res.json(menu.orders));
 
-app.listen(3000, () => console.log('Admin Server Running'));
+app.listen(3000, () => console.log('Restaurant Server Ready'));
