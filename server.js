@@ -1,71 +1,42 @@
-const express = require('express');
-const app = express();
-const cors = require('cors');
-const port = process.env.PORT || 3000;
-
-app.use(cors());
-app.use(express.json());
-
-// البيانات المركزية
-let systemConfig = {
-    restaurantName: "مطاعم أبو يونس",
-    bgImage: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
-    themeColor: "#1e4620",
-    availableTables: 12
-};
-
-let mealsData = [
-    { id: 1, name: "شاورما دجاج", price: 3.50, category: "شاورما", description: "شاورما على الفحم", img: "https://images.unsplash.com/photo-1649144368140-5e3692beeb51?w=200", available: true },
-    { id: 2, name: "بروستد كامل", price: 6.00, category: "بروستد", description: "دجاج مقرمش", img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=200", available: true }
-];
-
-// 1. واجهة الزبائن (الرابط الرئيسي)
-app.get('/', (req, res) => {
-    res.send(`
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${systemConfig.restaurantName}</title>
-    <style>
-        body { font-family: sans-serif; background: #f4f6f8; margin: 0; padding-bottom: 80px; }
-        .page-wrapper { max-width: 500px; margin: auto; background: white; min-height: 100vh; }
-        .header { height: 180px; background: url('${systemConfig.bgImage}'); background-size: cover; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; text-shadow: 2px 2px 4px black; }
-        .meal-card { padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; }
-        .meal-img { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; }
-    </style>
-</head>
-<body>
-    <div class="page-wrapper">
-        <div class="header"><h1>${systemConfig.restaurantName}</h1></div>
-        ${mealsData.filter(m => m.available).map(m => `
-            <div class="meal-card">
-                <img src="${m.img}" class="meal-img">
-                <div>
-                    <div style="font-weight:bold;">${m.name}</div>
-                    <div style="color:var(--primary-color);">${m.price} دينار</div>
-                </div>
-            </div>
-        `).join('')}
-    </div>
-</body>
-</html>
-    `);
-});
-
-// 2. واجهة الإدارة (الرابط: /admin)
 app.get('/admin', (req, res) => {
     res.send(`
-        <html dir="rtl">
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; padding: 20px; }
+                .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+                h1 { color: #1e4620; text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: right; }
+                .btn { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; color: white; }
+                .btn-toggle { background: #1e4620; }
+                .form-group { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
+                input { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; width: 200px; }
+            </style>
+        </head>
         <body>
-            <h1>لوحة الإدارة - التحكم بالأصناف</h1>
-            ${mealsData.map(m => `
-                <div style="border:1px solid #ccc; padding:10px; margin:10px;">
-                    ${m.name} - <strong>${m.available ? 'متاحة' : 'غير متاحة'}</strong>
-                    <button onclick="toggle(${m.id}, ${!m.available})">تبديل الحالة</button>
+            <div class="container">
+                <h1>لوحة الإدارة - QMC</h1>
+                <table>
+                    <tr><th>اسم الوجبة</th><th>السعر</th><th>الحالة</th><th>تحكم</th></tr>
+                    ${mealsData.map(m => `
+                        <tr>
+                            <td>${m.name}</td>
+                            <td>${m.price} دينار</td>
+                            <td>${m.available ? '✅ متاحة' : '❌ مخفية'}</td>
+                            <td><button class="btn btn-toggle" onclick="toggle(${m.id}, ${!m.available})">تبديل</button></td>
+                        </tr>
+                    `).join('')}
+                </table>
+                <div class="form-group">
+                    <h3>إضافة صنف جديد</h3>
+                    <input type="text" id="name" placeholder="اسم الوجبة">
+                    <input type="number" id="price" placeholder="السعر">
+                    <button class="btn btn-toggle" onclick="addMeal()">إضافة للـ Menu</button>
                 </div>
-            `).join('')}
+            </div>
             <script>
                 async function toggle(id, status) {
                     await fetch('/api/toggle-meal-status', {
@@ -75,17 +46,13 @@ app.get('/admin', (req, res) => {
                     });
                     location.reload();
                 }
+                async function addMeal() {
+                    const name = document.getElementById('name').value;
+                    const price = document.getElementById('price').value;
+                    alert("الميزة جاهزة! سنربطها الآن بقاعدة البيانات.");
+                }
             </script>
         </body>
         </html>
     `);
 });
-
-// API لتغيير الحالة
-app.post('/api/toggle-meal-status', (req, res) => {
-    const { mealId, available } = req.body;
-    const meal = mealsData.find(m => m.id === parseInt(mealId));
-    if (meal) { meal.available = available; res.json({ success: true }); }
-});
-
-app.listen(port, () => console.log('السيرفر يعمل الآن!'));
